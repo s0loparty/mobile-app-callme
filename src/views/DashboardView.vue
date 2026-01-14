@@ -2,7 +2,10 @@
   <div class="min-h-screen bg-gray-100 flex flex-col">
     <!-- Header -->
     <header class="bg-indigo-600 text-white p-4 flex justify-between items-center">
-      <h1 class="text-xl font-semibold">Dashboard</h1>
+      <div>
+        <h1 class="text-xl font-semibold">Привет, {{ authStore.user?.name }}!</h1>
+        <p class="text-sm text-indigo-200">{{ authStore.user?.email }}</p>
+      </div>
       <button @click="authStore.logout()" class="px-3 py-1 rounded-md bg-indigo-700 hover:bg-indigo-800 text-sm">
         Выйти
       </button>
@@ -47,9 +50,9 @@
       </div>
 
       <!-- Rooms Tab Content -->
-      <div v-if="activeTab === 'rooms'">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Комнаты</h2>
-        <div class="mb-4">
+      <div v-if="activeTab === 'rooms'" class="space-y-6">
+        <div class="flex justify-between items-center">
+          <h2 class="text-2xl font-bold text-gray-800">Комнаты</h2>
           <button @click="showCreateRoomModal = true"
                   class="px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-sm">
             Создать новую комнату
@@ -58,20 +61,45 @@
 
         <div v-if="roomsStore.loading" class="text-center text-gray-500">Загрузка комнат...</div>
         <div v-else-if="roomsStore.error" class="text-red-500 text-center">{{ roomsStore.error }}</div>
-        <ul v-else-if="roomsStore.rooms.length" class="space-y-2">
-          <li v-for="room in roomsStore.rooms" :key="room.id"
-              class="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
-            <span>
-              {{ room.name }} 
-              <span v-if="room.is_private" class="text-yellow-600 text-xs">(Приватная)</span>
-            </span>
-            <button @click="joinRoom(room.id, room.is_private)"
-                    class="px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-sm">
-              Присоединиться
-            </button>
-          </li>
-        </ul>
-        <div v-else class="text-center text-gray-500">Комнаты не найдены.</div>
+        
+        <div v-else>
+          <!-- My Rooms -->
+          <div>
+            <h3 class="text-xl font-semibold text-gray-700 mb-3">Мои комнаты</h3>
+            <ul v-if="roomsStore.userRooms.length" class="space-y-2">
+              <li v-for="room in roomsStore.userRooms" :key="room.id"
+                  class="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
+                <span>
+                  {{ room.name }} 
+                  <span v-if="room.is_private" class="text-yellow-600 text-xs">(Приватная)</span>
+                </span>
+                <button @click="joinRoom(room.id, room.is_private)"
+                        class="px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-sm">
+                  Присоединиться
+                </button>
+              </li>
+            </ul>
+            <div v-else class="text-center text-gray-500 text-sm py-4">Вы еще не создали ни одной комнаты.</div>
+          </div>
+
+          <!-- Public Rooms -->
+          <div class="mt-6">
+            <h3 class="text-xl font-semibold text-gray-700 mb-3">Публичные комнаты</h3>
+            <ul v-if="roomsStore.publicRooms.length" class="space-y-2">
+              <li v-for="room in roomsStore.publicRooms" :key="room.id"
+                  class="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
+                <span>
+                  {{ room.name }}
+                </span>
+                <button @click="joinRoom(room.id, room.is_private)"
+                        class="px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-sm">
+                  Присоединиться
+                </button>
+              </li>
+            </ul>
+            <div v-else class="text-center text-gray-500 text-sm py-4">Нет доступных публичных комнат.</div>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -118,12 +146,17 @@ onMounted(() => {
   roomsStore.fetchRooms();
 });
 
-const startOneToOneCall = (userId: number) => {
-  // For 1-on-1 calls, we might create a temporary room or
-  // just directly pass the userId to RoomSetup.
-  // For simplicity, let's navigate to RoomSetup with a dummy room ID for now.
-  // In a real app, you'd likely create a unique room for a 1-on-1 call.
-  router.push({ name: 'RoomSetup', params: { roomId: `user-${userId}` } });
+const startOneToOneCall = async (userId: number) => {
+  try {
+    const { room_id, token, livekit_host } = await roomsStore.initiateOneToOneCall(userId);
+    router.push({
+      name: 'RoomSetup',
+      params: { roomId: room_id.toString() },
+      query: { token, livekit_host }
+    });
+  } catch (error) {
+    alert(roomsStore.error || 'Не удалось начать звонок.');
+  }
 };
 
 const joinRoom = async (roomId: number, isPrivate: boolean) => {
@@ -134,8 +167,12 @@ const joinRoom = async (roomId: number, isPrivate: boolean) => {
     if (!password) return; // User cancelled
   }
   try {
-    await roomsStore.joinRoom(roomId, password);
-    router.push({ name: 'RoomSetup', params: { roomId: roomId.toString() } });
+    const { token, livekit_host } = await roomsStore.joinRoom(roomId, password); // Capture token and livekit_host
+    router.push({
+      name: 'RoomSetup',
+      params: { roomId: roomId.toString() },
+      query: { token, livekit_host } // Pass them as query parameters
+    });
   } catch (error) {
     alert(roomsStore.error || 'Не удалось присоединиться к комнате.');
   }

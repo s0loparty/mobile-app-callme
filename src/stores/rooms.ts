@@ -10,14 +10,16 @@ interface Room {
 }
 
 interface RoomsState {
-  rooms: Room[];
+  publicRooms: Room[];
+  userRooms: Room[];
   loading: boolean;
   error: string | null;
 }
 
 export const useRoomsStore = defineStore('rooms', {
   state: (): RoomsState => ({
-    rooms: [],
+    publicRooms: [],
+    userRooms: [],
     loading: false,
     error: null,
   }),
@@ -26,9 +28,9 @@ export const useRoomsStore = defineStore('rooms', {
       this.loading = true;
       this.error = null;
       try {
-        // Настройте конечную точку для вашего Laravel API
-        const response = await api.get('/rooms'); 
-        this.rooms = response.data.data; // Предполагается, что API возвращает { data: [...] }
+        const response = await api.get('/rooms');
+        this.publicRooms = response.data.public_rooms;
+        this.userRooms = response.data.user_rooms;
       } catch (error: any) {
         this.error = error.response?.data?.message || 'Failed to fetch rooms';
         console.error('Fetch rooms error:', error);
@@ -41,31 +43,51 @@ export const useRoomsStore = defineStore('rooms', {
       this.loading = true;
       this.error = null;
       try {
-        // Настройте конечную точку для вашего Laravel API
         const response = await api.post('/rooms', roomData);
-        // При желании, добавьте новую комнату в состояние
-        // this.rooms.push(response.data.data); 
-        return response.data.data; // Вернуть созданную комнату
+        // After creating a room, we should refetch all rooms to stay in sync
+        await this.fetchRooms();
+        return response.data; // Return the created room
       } catch (error: any) {
         this.error = error.response?.data?.message || 'Failed to create room';
         console.error('Create room error:', error);
-        throw error; // Повторно выбросить, чтобы компонент мог обработать
+        throw error; // Re-throw to allow component to handle
       } finally {
         this.loading = false;
       }
     },
 
-    async joinRoom(roomId: number, password?: string) {
+    async joinRoom(roomId: number, password?: string): Promise<{ token: string; livekit_host: string }> {
       this.loading = true;
       this.error = null;
       try {
-        // Настройте конечную точку для вашего Laravel API
-        const response = await api.post(`/rooms/${roomId}/join`, { password });
-        return response.data.data; // Вернуть детали комнаты или подтверждение присоединения
+        const payload: { password?: string } = {};
+        if (password) {
+          payload.password = password;
+        }
+        const response = await api.post(`/rooms/${roomId}/join`, payload);
+        return {
+          token: response.data.token,
+          livekit_host: response.data.livekit_host,
+        };
       } catch (error: any) {
         this.error = error.response?.data?.message || 'Failed to join room';
         console.error('Join room error:', error);
-        throw error; // Повторно выбросить, чтобы компонент мог обработать
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async initiateOneToOneCall(userId: number): Promise<{ room_id: number; token: string; livekit_host: string }> {
+      this.loading = true;
+      this.error = null;
+      try {
+        const response = await api.post(`/users/${userId}/call`);
+        return response.data;
+      } catch (error: any) {
+        this.error = error.response?.data?.message || 'Failed to initiate call';
+        console.error('Initiate call error:', error);
+        throw error;
       } finally {
         this.loading = false;
       }

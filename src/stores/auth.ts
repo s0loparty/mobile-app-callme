@@ -35,12 +35,12 @@ export const useAuthStore = defineStore('auth', {
       try {
         // Настройте конечную точку для вашей конфигурации Laravel Sanctum
         const response = await api.post('/login', credentials); 
-        const { user, token } = response.data; // Настройте в соответствии со структурой ответа вашего API
+        const { user, access_token } = response.data; // Настройте в соответствии со структурой ответа вашего API
 
         this.user = user;
-        this.token = token; // Laravel Sanctum может возвращать обычный текстовый токен или устанавливать cookie
+        this.token = access_token; // Laravel Sanctum может возвращать обычный текстовый токен или устанавливать cookie
         this.isAuthenticated = true;
-        localStorage.setItem('authToken', token);
+        localStorage.setItem('authToken', access_token);
 
         router.push('/dashboard'); // Перенаправление на дашборд после успешного входа
       } catch (error: any) {

@@ -14,7 +14,7 @@
       <div class="relative bg-black rounded-lg overflow-hidden flex items-center justify-center">
         <video ref="localVideoRef" autoplay playsinline muted class="w-full h-full object-cover"></video>
         <div class="absolute bottom-2 left-2 bg-gray-700 bg-opacity-75 px-2 py-1 rounded-md text-xs">Я</div>
-        <div v-if="!localVideoEnabled" class="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75">
+        <div v-if="!localVideoEnabled" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
           <span class="text-lg">Камера выключена</span>
         </div>
       </div>
@@ -26,7 +26,7 @@
         <div class="absolute bottom-2 left-2 bg-gray-700 bg-opacity-75 px-2 py-1 rounded-md text-xs">
           {{ participant.identity }}
         </div>
-        <div v-if="!getParticipantVideoEnabled(participant.sid)" class="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75">
+        <div v-if="!getParticipantVideoEnabled(participant.sid)" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
           <span class="text-lg">Камера выключена</span>
         </div>
       </div>
@@ -93,7 +93,17 @@ const initialAudioEnabled = route.query.micEnabled === 'true';
 const initialCameraId = route.query.cameraId as string | undefined;
 const initialMicId = route.query.micId as string | undefined;
 
+// Новые: Извлечь livekit_host и token из параметров запроса маршрута
+const livekitHost = route.query.livekit_host as string;
+const livekitToken = route.query.token as string;
+
 onMounted(async () => {
+  // Проверить наличие токена и хоста перед подключением
+  if (!livekitHost || !livekitToken) {
+    alert('Отсутствует токен или хост LiveKit. Невозможно подключиться к комнате.');
+    router.replace('/dashboard'); // Перенаправить на дашборд, если данные отсутствуют
+    return;
+  }
   await connectToRoom();
 });
 
@@ -136,7 +146,12 @@ async function connectToRoom() {
     .on(RoomEvent.ParticipantDisconnected, (participant: RemoteParticipant) => {
       console.log('Participant disconnected:', participant.identity);
       remoteParticipants.value = remoteParticipants.value.filter(p => p.sid !== participant.sid);
-      participant.getTrackPublications().forEach(pub => pub.track?.detach());
+      // Отсоединяем все дорожки и удаляем аудио/видео элементы
+      participant.getTrackPublications().forEach(pub => {
+        if (pub.track) {
+          pub.track.detach().forEach(el => el.remove());
+        }
+      });
     })
     .on(RoomEvent.TrackSubscribed, async (track: RemoteTrack, _publication: RemoteTrackPublication, participant: RemoteParticipant) => {
       console.log(`Track subscribed: ${track.kind} for ${participant.identity}`);
@@ -146,6 +161,10 @@ async function connectToRoom() {
         if (videoEl) {
             track.attach(videoEl);
         }
+      } else if (track.kind === Track.Kind.Audio) {
+        // Явно прикрепляем и воспроизводим аудио, чтобы обеспечить работу в разных браузерах
+        const audioEl = track.attach();
+        document.body.appendChild(audioEl);
       }
     })
     .on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack, _publication: RemoteTrackPublication, participant: RemoteParticipant) => {
@@ -160,29 +179,8 @@ async function connectToRoom() {
     });
 
   try {
-    const { VITE_LIVEKIT_URL } = import.meta.env;
-    const LIVEKIT_URL = VITE_LIVEKIT_URL;
-    let token = '';
-
-    if (!authStore.user) {
-        await authStore.checkAuth();
-    }
-    if (authStore.user) {
-        const tokenResponse = await api.post('/livekit/token', {
-            roomName: roomId,
-            identity: authStore.user.id.toString(),
-            userName: authStore.user.name,
-        });
-        token = tokenResponse.data.token;
-    }
-
-    if (!token) {
-      alert('LiveKit токен не найден. Подключитесь к бэкенду.');
-      router.push('/dashboard');
-      return;
-    }
-
-    await livekitRoom.connect(LIVEKIT_URL, token);
+    // Использовать livekitHost и livekitToken, полученные через параметры запроса
+    await livekitRoom.connect(livekitHost, livekitToken);
 
     localVideoEnabled.value = initialVideoEnabled;
     localAudioEnabled.value = initialAudioEnabled;

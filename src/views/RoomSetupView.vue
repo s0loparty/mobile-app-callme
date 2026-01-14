@@ -80,6 +80,9 @@ const router = useRouter();
 const roomId = ref(route.params.roomId as string);
 const roomName = ref(route.query.name as string || `комнате ${roomId.value}`);
 
+const livekitHost = route.query.livekit_host as string;
+const livekitToken = route.query.token as string;
+
 const localVideo = ref<HTMLVideoElement | null>(null);
 const cameraDevices = ref<MediaDeviceInfo[]>([]);
 const micDevices = ref<MediaDeviceInfo[]>([]);
@@ -93,6 +96,12 @@ let currentVideoTrack: LocalVideoTrack | null = null;
 let currentAudioTrack: LocalAudioTrack | null = null;
 
 onMounted(async () => {
+  // Ensure token and host are present
+  if (!livekitHost || !livekitToken) {
+    error.value = 'Не удалось получить данные для подключения к LiveKit. Попробуйте еще раз.';
+    router.replace('/dashboard'); // Redirect if essential data is missing
+    return;
+  }
   await requestPermissions();
   await enumerateDevices();
   await startMediaStream();
@@ -218,6 +227,11 @@ function joinCall() {
     error.value = 'ID комнаты не указан.';
     return;
   }
+  if (!livekitHost || !livekitToken) {
+    error.value = 'Отсутствует токен или хост LiveKit. Невозможно присоединиться.';
+    return;
+  }
+
   router.push({
     name: 'CallRoom',
     params: { roomId: roomId.value },
@@ -226,6 +240,8 @@ function joinCall() {
       micEnabled: micEnabled.value.toString(),
       cameraId: selectedCameraId.value,
       micId: selectedMicId.value,
+      livekit_host: livekitHost, // Pass along
+      token: livekitToken       // Pass along
     }
   });
 }
