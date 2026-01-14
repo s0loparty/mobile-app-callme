@@ -1,0 +1,56 @@
+name: Build Android App
+
+on:
+  push:
+    branches: [ "build" ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ./callme-app
+        run: npm install
+
+      - name: Create .env file
+        working-directory: ./callme-app
+        run: |
+          echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}" >> .env
+          echo "VITE_LIVEKIT_URL=${{ secrets.VITE_LIVEKIT_URL }}" >> .env
+          echo "Created .env file with secrets:"
+          cat .env
+
+      - name: Build Vue App
+        working-directory: ./callme-app
+        run: npm run build
+
+      - name: Sync Capacitor
+        working-directory: ./callme-app
+        run: npx cap sync android
+
+      - name: Build Android APK
+        working-directory: ./callme-app/android
+        run: ./gradlew assembleDebug
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-debug
+          path: callme-app/android/app/build/outputs/apk/debug/app-debug.apk
