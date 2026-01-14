@@ -54,8 +54,9 @@
         <div class="flex justify-between items-center">
           <h2 class="text-2xl font-bold text-gray-800">Комнаты</h2>
           <button @click="showCreateRoomModal = true"
-                  class="px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-sm">
-            Создать новую комнату
+                  class="px-4 py-2 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-sm flex items-center gap-x-1">
+                  <PlusIcon class="size-4"/>
+            Создать комнату
           </button>
         </div>
 
@@ -75,7 +76,7 @@
                 </span>
                 <button @click="joinRoom(room.id, room.is_private)"
                         class="px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-sm">
-                  Присоединиться
+                  Войти
                 </button>
               </li>
             </ul>
@@ -128,6 +129,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useUsersStore } from '../stores/users';
 import { useRoomsStore } from '../stores/rooms';
+import { PlusIcon } from 'lucide-vue-next';
 
 const router = useRouter();
 const authStore = useAuthStore();
