@@ -72,12 +72,9 @@ import {
   LocalAudioTrack,
   RemoteTrack,
 } from 'livekit-client';
-import { useAuthStore } from '../stores/auth';
-import api from '../services/api';
 
 const route = useRoute();
 const router = useRouter();
-const authStore = useAuthStore();
 
 const roomId = route.params.roomId as string;
 const localVideoRef = ref<HTMLVideoElement | null>(null);
