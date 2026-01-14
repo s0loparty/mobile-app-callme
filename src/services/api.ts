@@ -6,7 +6,7 @@ const API_BASE_URL = VITE_API_BASE_URL;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // Важно для Laravel Sanctum, если используются куки/сессии
+  withCredentials: false,
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
