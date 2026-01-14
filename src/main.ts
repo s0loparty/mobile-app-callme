@@ -1,10 +1,10 @@
+import { configureEcho } from '@laravel/echo-vue';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
-import { useAuthStore } from './stores/auth'; // Импортируем хранилище
+import { useAuthStore } from './stores/auth';
 
-import { configureEcho } from '@laravel/echo-vue';
 import './assets/css/style.css';
 import './assets/css/tw.css';
 

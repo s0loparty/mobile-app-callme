@@ -133,16 +133,14 @@ import {
   LocalVideoTrack,
 } from 'livekit-client';
 import { CameraIcon, CameraOffIcon, MicIcon, MicOff } from 'lucide-vue-next';
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useRoomsStore } from '../stores/rooms';
 
 const route = useRoute();
 const router = useRouter();
-const roomsStore = useRoomsStore();
 
 const roomId = ref(route.params.roomId as string);
-const roomName = ref((route.query.name as string) || `комнате ${roomId.value}`);
+// const roomName = ref((route.query.name as string) || `комнате ${roomId.value}`);
 
 const livekitHost = route.query.livekit_host as string;
 const livekitToken = route.query.token as string;
@@ -158,18 +156,6 @@ const error = ref<string | null>(null);
 
 let currentVideoTrack: LocalVideoTrack | null = null;
 let currentAudioTrack: LocalAudioTrack | null = null;
-
-const displayRoomName = computed(() => {
-  const id = parseInt(roomId.value, 10);
-  if (isNaN(id)) {
-    return roomId.value; // Fallback for non-numeric room IDs like from 1-on-1 calls
-  }
-
-  const room =
-    roomsStore.userRooms.find((r) => r.id === id) ||
-    roomsStore.publicRooms.find((r) => r.id === id);
-  return room ? room.name : roomId.value;
-});
 
 onMounted(async () => {
   // Add devicechange listener
