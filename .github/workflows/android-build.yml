@@ -2,14 +2,14 @@ name: Build Android App
 
 on:
   push:
-    branches: [ "build" ]
+    branches: ['build']
   workflow_dispatch:
 
 jobs:
   build-android:
     name: Build Android
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
         run: npm run build
 
       # - name: Add Android Platform
-      #   run: npx cap add android 
+      #   run: npx cap add android
 
       - name: Sync Capacitor
         run: npx cap sync android

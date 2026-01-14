@@ -1,12 +1,25 @@
 <template>
-  <div class="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
-    <h1 class="text-3xl font-bold mb-6">Настройка комнаты</h1>
+  <div
+    class="flex min-h-screen flex-col items-center justify-center bg-gray-900 p-4 text-white"
+  >
+    <h1 class="mb-6 text-3xl font-bold">Настройка комнаты</h1>
 
-    <div class="w-full max-w-md bg-gray-800 p-6 rounded-lg shadow-xl space-y-4">
+    <div class="w-full max-w-md space-y-4 rounded-lg bg-gray-800 p-6 shadow-xl">
       <!-- Video Preview -->
-      <div class="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
-        <video ref="localVideo" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover"></video>
-        <div v-if="!cameraEnabled" class="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75">
+      <div
+        class="relative aspect-video w-full overflow-hidden rounded-lg bg-black"
+      >
+        <video
+          ref="localVideo"
+          autoplay
+          playsinline
+          muted
+          class="absolute inset-0 h-full w-full object-cover"
+        ></video>
+        <div
+          v-if="!cameraEnabled"
+          class="bg-opacity-75 absolute inset-0 flex items-center justify-center bg-gray-900"
+        >
           <span class="text-lg">Камера отключена</span>
         </div>
       </div>
@@ -15,11 +28,26 @@
       <div class="space-y-4">
         <!-- Camera Selector -->
         <div>
-          <label for="camera-select" class="block text-sm font-medium text-gray-300">Камера:</label>
-          <select id="camera-select" v-model="selectedCameraId" @change="updateMediaStream" :disabled="!cameraDevices.length"
-                  class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-gray-700 text-white disabled:bg-gray-600 disabled:text-gray-400">
-            <option v-if="!cameraDevices.length" value="">Камеры не найдены</option>
-            <option v-for="device in cameraDevices" :key="device.deviceId" :value="device.deviceId">
+          <label
+            for="camera-select"
+            class="block text-sm font-medium text-gray-300"
+            >Камера:</label
+          >
+          <select
+            id="camera-select"
+            v-model="selectedCameraId"
+            @change="updateMediaStream"
+            :disabled="!cameraDevices.length"
+            class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 py-2 pr-10 pl-3 text-base text-white focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none disabled:bg-gray-600 disabled:text-gray-400 sm:text-sm"
+          >
+            <option v-if="!cameraDevices.length" value="">
+              Камеры не найдены
+            </option>
+            <option
+              v-for="device in cameraDevices"
+              :key="device.deviceId"
+              :value="device.deviceId"
+            >
               {{ device.label }}
             </option>
           </select>
@@ -27,11 +55,26 @@
 
         <!-- Microphone Selector -->
         <div>
-          <label for="mic-select" class="block text-sm font-medium text-gray-300">Микрофон:</label>
-          <select id="mic-select" v-model="selectedMicId" @change="updateMediaStream" :disabled="!micDevices.length"
-                  class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-gray-700 text-white disabled:bg-gray-600 disabled:text-gray-400">
-            <option v-if="!micDevices.length" value="">Микрофоны не найдены</option>
-            <option v-for="device in micDevices" :key="device.deviceId" :value="device.deviceId">
+          <label
+            for="mic-select"
+            class="block text-sm font-medium text-gray-300"
+            >Микрофон:</label
+          >
+          <select
+            id="mic-select"
+            v-model="selectedMicId"
+            @change="updateMediaStream"
+            :disabled="!micDevices.length"
+            class="mt-1 block w-full rounded-md border-gray-600 bg-gray-700 py-2 pr-10 pl-3 text-base text-white focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none disabled:bg-gray-600 disabled:text-gray-400 sm:text-sm"
+          >
+            <option v-if="!micDevices.length" value="">
+              Микрофоны не найдены
+            </option>
+            <option
+              v-for="device in micDevices"
+              :key="device.deviceId"
+              :value="device.deviceId"
+            >
               {{ device.label }}
             </option>
           </select>
@@ -39,14 +82,28 @@
 
         <!-- Mute/Unmute Buttons -->
         <div class="flex justify-around pt-2">
-          <button @click="toggleCamera" :disabled="!cameraDevices.length"
-                  class="px-4 py-2 rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  :class="cameraEnabled ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-600 hover:bg-gray-700'">
+          <button
+            @click="toggleCamera"
+            :disabled="!cameraDevices.length"
+            class="rounded-md px-4 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+            :class="
+              cameraEnabled
+                ? 'bg-red-500 hover:bg-red-600'
+                : 'bg-gray-600 hover:bg-gray-700'
+            "
+          >
             {{ cameraEnabled ? 'Отключить камеру' : 'Включить камеру' }}
           </button>
-          <button @click="toggleMicrophone" :disabled="!micDevices.length"
-                  class="px-4 py-2 rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  :class="micEnabled ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-600 hover:bg-gray-700'">
+          <button
+            @click="toggleMicrophone"
+            :disabled="!micDevices.length"
+            class="rounded-md px-4 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+            :class="
+              micEnabled
+                ? 'bg-red-500 hover:bg-red-600'
+                : 'bg-gray-600 hover:bg-gray-700'
+            "
+          >
             {{ micEnabled ? 'Отключить микрофон' : 'Включить микрофон' }}
           </button>
         </div>
@@ -54,33 +111,35 @@
 
       <!-- Join Button -->
       <div class="pt-6">
-        <button @click="joinCall"
-                class="w-full py-3 px-4 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg"
-                :disabled="!roomId">
+        <button
+          @click="joinCall"
+          class="w-full rounded-md bg-indigo-600 px-4 py-3 text-lg font-bold text-white hover:bg-indigo-700"
+          :disabled="!roomId"
+        >
           Присоединиться к {{ roomName || 'комнате' }}
         </button>
       </div>
     </div>
 
-    <div v-if="error" class="text-yellow-400 mt-4">{{ error }}</div>
+    <div v-if="error" class="mt-4 text-yellow-400">{{ error }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import {
-  createLocalVideoTrack,
   createLocalAudioTrack,
+  createLocalVideoTrack,
+  LocalAudioTrack,
   LocalVideoTrack,
-  LocalAudioTrack
 } from 'livekit-client';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
 const router = useRouter();
 
 const roomId = ref(route.params.roomId as string);
-const roomName = ref(route.query.name as string || `комнате ${roomId.value}`);
+const roomName = ref((route.query.name as string) || `комнате ${roomId.value}`);
 
 const livekitHost = route.query.livekit_host as string;
 const livekitToken = route.query.token as string;
@@ -102,7 +161,8 @@ onMounted(async () => {
   navigator.mediaDevices.addEventListener('devicechange', enumerateDevices);
 
   if (!livekitHost || !livekitToken) {
-    error.value = 'Не удалось получить данные для подключения к LiveKit. Попробуйте еще раз.';
+    error.value =
+      'Не удалось получить данные для подключения к LiveKit. Попробуйте еще раз.';
     router.replace('/dashboard');
     return;
   }
@@ -130,18 +190,19 @@ async function requestPermissions() {
     await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   } catch (err: any) {
     console.warn('Could not get media stream for permissions check:', err);
-    error.value = 'Не удалось получить доступ к камере или микрофону. Вы можете присоединиться без них.';
+    error.value =
+      'Не удалось получить доступ к камере или микрофону. Вы можете присоединиться без них.';
   }
 }
 
 async function enumerateDevices() {
   try {
     // Stop any existing stream before enumerating, to get fresh device labels
-    stopMediaStream(); 
+    stopMediaStream();
     const devices = await navigator.mediaDevices.enumerateDevices();
-    
-    cameraDevices.value = devices.filter(d => d.kind === 'videoinput');
-    micDevices.value = devices.filter(d => d.kind === 'audioinput');
+
+    cameraDevices.value = devices.filter((d) => d.kind === 'videoinput');
+    micDevices.value = devices.filter((d) => d.kind === 'audioinput');
 
     if (cameraDevices.value.length > 0 && !selectedCameraId.value) {
       selectedCameraId.value = cameraDevices.value[0]?.deviceId || '';
@@ -152,7 +213,6 @@ async function enumerateDevices() {
 
     // After enumerating, restart the media stream with the selected (or default) devices
     await startMediaStream();
-    
   } catch (err: any) {
     console.error('Error enumerating devices:', err);
     error.value = 'Не удалось получить список медиаустройств.';
@@ -161,7 +221,7 @@ async function enumerateDevices() {
 
 async function startMediaStream() {
   stopMediaStream();
-  
+
   try {
     if (cameraDevices.value.length > 0) {
       currentVideoTrack = await createLocalVideoTrack({
@@ -177,7 +237,7 @@ async function startMediaStream() {
 
     if (micDevices.value.length > 0) {
       currentAudioTrack = await createLocalAudioTrack({
-        deviceId: selectedMicId.value || undefined
+        deviceId: selectedMicId.value || undefined,
       });
       micEnabled.value = true;
     } else {
@@ -236,7 +296,8 @@ function joinCall() {
     return;
   }
   if (!livekitHost || !livekitToken) {
-    error.value = 'Отсутствует токен или хост LiveKit. Невозможно присоединиться.';
+    error.value =
+      'Отсутствует токен или хост LiveKit. Невозможно присоединиться.';
     return;
   }
 
@@ -249,8 +310,8 @@ function joinCall() {
       cameraId: selectedCameraId.value,
       micId: selectedMicId.value,
       livekit_host: livekitHost,
-      token: livekitToken
-    }
+      token: livekitToken,
+    },
   });
 }
 </script>

@@ -39,7 +39,11 @@ export const useRoomsStore = defineStore('rooms', {
       }
     },
 
-    async createRoom(roomData: { name: string; is_private: boolean; password?: string }) {
+    async createRoom(roomData: {
+      name: string;
+      is_private: boolean;
+      password?: string;
+    }) {
       this.loading = true;
       this.error = null;
       try {
@@ -56,7 +60,10 @@ export const useRoomsStore = defineStore('rooms', {
       }
     },
 
-    async joinRoom(roomId: number, password?: string): Promise<{ token: string; livekit_host: string }> {
+    async joinRoom(
+      roomId: number,
+      password?: string,
+    ): Promise<{ token: string; livekit_host: string }> {
       this.loading = true;
       this.error = null;
       try {
@@ -78,7 +85,9 @@ export const useRoomsStore = defineStore('rooms', {
       }
     },
 
-    async initiateOneToOneCall(userId: number): Promise<{ room_id: number; token: string; livekit_host: string }> {
+    async initiateOneToOneCall(
+      userId: number,
+    ): Promise<{ room_id: number; token: string; livekit_host: string }> {
       this.loading = true;
       this.error = null;
       try {

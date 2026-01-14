@@ -8,7 +8,7 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: false,
   headers: {
-    'Accept': 'application/json',
+    Accept: 'application/json',
     'Content-Type': 'application/json',
   },
 });
@@ -24,7 +24,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Перехватчик ответов для обработки истечения срока действия токена или других глобальных ошибок
@@ -39,7 +39,7 @@ api.interceptors.response.use(
       // Здесь можно было бы добавить router.push('/login'), но лучше это обрабатывать на уровне компонента
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

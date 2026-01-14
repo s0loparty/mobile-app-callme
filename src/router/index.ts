@@ -20,25 +20,25 @@ const routes = [
     path: '/dashboard',
     name: 'Dashboard',
     component: () => import('../views/DashboardView.vue'),
-    meta: { requiresAuth: true } // Example of a route requiring authentication
+    meta: { requiresAuth: true }, // Example of a route requiring authentication
   },
   {
     path: '/room-setup/:roomId?', // Optional roomId for direct room setup
     name: 'RoomSetup',
     component: () => import('../views/RoomSetupView.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   {
     path: '/call-room/:roomId',
     name: 'CallRoom',
     component: () => import('../views/CallRoomView.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   // Catch all other routes and redirect to login
   {
     path: '/:catchAll(.*)',
     redirect: '/login',
-  }
+  },
 ];
 
 const router = createRouter({
@@ -57,6 +57,5 @@ router.beforeEach((to, _, next) => {
     next();
   }
 });
-
 
 export default router;

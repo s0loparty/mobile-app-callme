@@ -26,8 +26,8 @@ export const useUsersStore = defineStore('users', {
       this.error = null;
       try {
         // Настройте конечную точку для вашего Laravel API
-        const response = await api.get('/users'); 
-        
+        const response = await api.get('/users');
+
         this.users = response.data; // Предполагается, что API возвращает { data: [...] }
       } catch (error: any) {
         this.error = error.response?.data?.message || 'Failed to fetch users';

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
-import api from '../services/api';
 import router from '../router'; // Для перенаправления после входа/выхода
+import api from '../services/api';
 
 interface User {
   id: number;
@@ -34,7 +34,7 @@ export const useAuthStore = defineStore('auth', {
       this.error = null;
       try {
         // Настройте конечную точку для вашей конфигурации Laravel Sanctum
-        const response = await api.post('/login', credentials); 
+        const response = await api.post('/login', credentials);
         const { user, access_token } = response.data; // Настройте в соответствии со структурой ответа вашего API
 
         this.user = user;
@@ -51,7 +51,12 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async register(userData: { name: string; email: string; password: string; password_confirmation: string }) {
+    async register(userData: {
+      name: string;
+      email: string;
+      password: string;
+      password_confirmation: string;
+    }) {
       this.loading = true;
       this.error = null;
       try {
@@ -88,7 +93,7 @@ export const useAuthStore = defineStore('auth', {
       if (this.token && !this.user) {
         try {
           // Настройте конечную точку для получения данных аутентифицированного пользователя
-          const response = await api.get('/user'); 
+          const response = await api.get('/user');
           this.user = response.data;
           this.isAuthenticated = true;
         } catch (error) {
@@ -96,6 +101,6 @@ export const useAuthStore = defineStore('auth', {
           this.logout(); // Токен может быть недействителен, выходим из системы
         }
       }
-    }
+    },
   },
 });
