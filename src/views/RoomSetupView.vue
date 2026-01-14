@@ -1,10 +1,8 @@
 <template>
   <div
-    class="flex min-h-screen flex-col items-center justify-center bg-gray-900 p-4 text-white"
+    class="flex min-h-screen flex-col items-center justify-start bg-gray-900 p-4 text-white"
   >
-    <h1 class="mb-6 text-3xl font-bold">Настройка комнаты</h1>
-
-    <div class="w-full max-w-md space-y-4 rounded-lg bg-gray-800 p-6 shadow-xl">
+    <div class="w-full max-w-md space-y-4 rounded-lg bg-gray-800 p-4 shadow-xl">
       <!-- Video Preview -->
       <div
         class="relative aspect-video w-full overflow-hidden rounded-lg bg-black"
@@ -81,42 +79,44 @@
         </div>
 
         <!-- Mute/Unmute Buttons -->
-        <div class="flex justify-around pt-2">
+        <div class="flex justify-center gap-x-4 pt-2">
           <button
             @click="toggleCamera"
             :disabled="!cameraDevices.length"
-            class="rounded-md px-4 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-full p-4 text-sm disabled:cursor-not-allowed disabled:opacity-30"
             :class="
               cameraEnabled
-                ? 'bg-red-500 hover:bg-red-600'
-                : 'bg-gray-600 hover:bg-gray-700'
+                ? 'bg-red-400 hover:bg-red-500'
+                : 'bg-gray-500 hover:bg-gray-600'
             "
           >
-            {{ cameraEnabled ? 'Отключить камеру' : 'Включить камеру' }}
+            <CameraOffIcon v-if="cameraEnabled" />
+            <CameraIcon v-else />
           </button>
           <button
             @click="toggleMicrophone"
             :disabled="!micDevices.length"
-            class="rounded-md px-4 py-2 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-full p-4 font-medium disabled:cursor-not-allowed disabled:opacity-30"
             :class="
               micEnabled
-                ? 'bg-red-500 hover:bg-red-600'
+                ? 'bg-red-400 hover:bg-red-500'
                 : 'bg-gray-600 hover:bg-gray-700'
             "
           >
-            {{ micEnabled ? 'Отключить микрофон' : 'Включить микрофон' }}
+            <MicOff v-if="micEnabled" />
+            <MicIcon v-else />
           </button>
         </div>
       </div>
 
       <!-- Join Button -->
-      <div class="pt-6">
+      <div class="pt-2">
         <button
           @click="joinCall"
-          class="w-full rounded-md bg-indigo-600 px-4 py-3 text-lg font-bold text-white hover:bg-indigo-700"
+          class="w-full rounded-md bg-indigo-500 px-4 py-3 text-white hover:bg-indigo-600"
           :disabled="!roomId"
         >
-          Присоединиться к {{ roomName || 'комнате' }}
+          Присоединиться
         </button>
       </div>
     </div>
@@ -132,11 +132,14 @@ import {
   LocalAudioTrack,
   LocalVideoTrack,
 } from 'livekit-client';
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { CameraIcon, CameraOffIcon, MicIcon, MicOff } from 'lucide-vue-next';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useRoomsStore } from '../stores/rooms';
 
 const route = useRoute();
 const router = useRouter();
+const roomsStore = useRoomsStore();
 
 const roomId = ref(route.params.roomId as string);
 const roomName = ref((route.query.name as string) || `комнате ${roomId.value}`);
@@ -155,6 +158,18 @@ const error = ref<string | null>(null);
 
 let currentVideoTrack: LocalVideoTrack | null = null;
 let currentAudioTrack: LocalAudioTrack | null = null;
+
+const displayRoomName = computed(() => {
+  const id = parseInt(roomId.value, 10);
+  if (isNaN(id)) {
+    return roomId.value; // Fallback for non-numeric room IDs like from 1-on-1 calls
+  }
+
+  const room =
+    roomsStore.userRooms.find((r) => r.id === id) ||
+    roomsStore.publicRooms.find((r) => r.id === id);
+  return room ? room.name : roomId.value;
+});
 
 onMounted(async () => {
   // Add devicechange listener
@@ -201,8 +216,12 @@ async function enumerateDevices() {
     stopMediaStream();
     const devices = await navigator.mediaDevices.enumerateDevices();
 
-    cameraDevices.value = devices.filter((d) => d.kind === 'videoinput');
-    micDevices.value = devices.filter((d) => d.kind === 'audioinput');
+    cameraDevices.value = devices.filter(
+      (d) => d.kind === 'videoinput' && d.deviceId.length,
+    );
+    micDevices.value = devices.filter(
+      (d) => d.kind === 'audioinput' && d.deviceId.length,
+    );
 
     if (cameraDevices.value.length > 0 && !selectedCameraId.value) {
       selectedCameraId.value = cameraDevices.value[0]?.deviceId || '';

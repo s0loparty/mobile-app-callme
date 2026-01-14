@@ -68,7 +68,8 @@
             <span>{{ user.name }} ({{ user.email }})</span>
             <button
               @click="startOneToOneCall(user.id)"
-              class="rounded-md bg-green-500 px-3 py-1 text-sm text-white hover:bg-green-600"
+              :disabled="user.id === authStore.user?.id"
+              class="rounded-md bg-green-500 px-3 py-1 text-sm text-white hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Позвонить
             </button>

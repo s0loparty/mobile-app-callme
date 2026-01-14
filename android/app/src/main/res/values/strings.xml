@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">callme-app</string>
-    <string name="title_activity_main">callme-app</string>
-    <string name="package_name">com.example.callme</string>
-    <string name="custom_url_scheme">com.example.callme</string>
+    <string name="app_name">Call me, Bro</string>
+    <string name="title_activity_main">callme-bro</string>
+    <string name="package_name">com.example.callme.bro</string>
+    <string name="custom_url_scheme">com.example.callme.bro</string>
 </resources>

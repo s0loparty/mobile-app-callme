@@ -17,6 +17,8 @@
     "@capacitor/cli": "^8.0.1",
     "@capacitor/core": "^8.0.1",
     "@capacitor/ios": "^8.0.1",
+    "@capacitor/preferences": "^8.0.0",
+    "@laravel/echo-vue": "^2.3.0",
     "axios": "^1.13.2",
     "livekit-client": "^2.17.0",
     "lucide-vue-next": "^0.562.0",
