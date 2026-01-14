@@ -262,7 +262,7 @@ async function connectToRoom() {
       RoomEvent.TrackSubscribed,
       async (
         track: RemoteTrack,
-        pub: RemoteTrackPublication,
+        _: RemoteTrackPublication,
         participant: RemoteParticipant,
       ) => {
         console.log(
@@ -284,7 +284,7 @@ async function connectToRoom() {
       RoomEvent.TrackUnsubscribed,
       (
         track: RemoteTrack,
-        pub: RemoteTrackPublication,
+        _: RemoteTrackPublication,
         participant: RemoteParticipant,
       ) => {
         console.log(
