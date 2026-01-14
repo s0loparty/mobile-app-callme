@@ -44,10 +44,6 @@ export const useAuthStore = defineStore('auth', {
 
         router.push('/dashboard'); // Перенаправление на дашборд после успешного входа
       } catch (error: any) {
-        alert(`error: ${error}`)
-        alert(`error.response: ${JSON.stringify(error.response)}`)
-        alert(`error.response.data: ${JSON.stringify(error.response.data)}`)
-        
         this.error = error.response?.data?.message || 'Login failed';
         console.error('Login error:', error);
       } finally {

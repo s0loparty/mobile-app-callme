@@ -16,8 +16,9 @@
         <!-- Camera Selector -->
         <div>
           <label for="camera-select" class="block text-sm font-medium text-gray-300">Камера:</label>
-          <select id="camera-select" v-model="selectedCameraId" @change="updateMediaStream"
-                  class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-gray-700 text-white">
+          <select id="camera-select" v-model="selectedCameraId" @change="updateMediaStream" :disabled="!cameraDevices.length"
+                  class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-gray-700 text-white disabled:bg-gray-600 disabled:text-gray-400">
+            <option v-if="!cameraDevices.length" value="">Камеры не найдены</option>
             <option v-for="device in cameraDevices" :key="device.deviceId" :value="device.deviceId">
               {{ device.label }}
             </option>
@@ -27,8 +28,9 @@
         <!-- Microphone Selector -->
         <div>
           <label for="mic-select" class="block text-sm font-medium text-gray-300">Микрофон:</label>
-          <select id="mic-select" v-model="selectedMicId" @change="updateMediaStream"
-                  class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-gray-700 text-white">
+          <select id="mic-select" v-model="selectedMicId" @change="updateMediaStream" :disabled="!micDevices.length"
+                  class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-gray-700 text-white disabled:bg-gray-600 disabled:text-gray-400">
+            <option v-if="!micDevices.length" value="">Микрофоны не найдены</option>
             <option v-for="device in micDevices" :key="device.deviceId" :value="device.deviceId">
               {{ device.label }}
             </option>
@@ -37,14 +39,14 @@
 
         <!-- Mute/Unmute Buttons -->
         <div class="flex justify-around pt-2">
-          <button @click="toggleCamera"
-                  :class="cameraEnabled ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-600 hover:bg-gray-700'"
-                  class="px-4 py-2 rounded-md text-white font-medium">
+          <button @click="toggleCamera" :disabled="!cameraDevices.length"
+                  class="px-4 py-2 rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  :class="cameraEnabled ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-600 hover:bg-gray-700'">
             {{ cameraEnabled ? 'Отключить камеру' : 'Включить камеру' }}
           </button>
-          <button @click="toggleMicrophone"
-                  :class="micEnabled ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-600 hover:bg-gray-700'"
-                  class="px-4 py-2 rounded-md text-white font-medium">
+          <button @click="toggleMicrophone" :disabled="!micDevices.length"
+                  class="px-4 py-2 rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  :class="micEnabled ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-600 hover:bg-gray-700'">
             {{ micEnabled ? 'Отключить микрофон' : 'Включить микрофон' }}
           </button>
         </div>
@@ -60,7 +62,7 @@
       </div>
     </div>
 
-    <div v-if="error" class="text-red-400 mt-4">{{ error }}</div>
+    <div v-if="error" class="text-yellow-400 mt-4">{{ error }}</div>
   </div>
 </template>
 
@@ -96,10 +98,12 @@ let currentVideoTrack: LocalVideoTrack | null = null;
 let currentAudioTrack: LocalAudioTrack | null = null;
 
 onMounted(async () => {
-  // Ensure token and host are present
+  // Add devicechange listener
+  navigator.mediaDevices.addEventListener('devicechange', enumerateDevices);
+
   if (!livekitHost || !livekitToken) {
     error.value = 'Не удалось получить данные для подключения к LiveKit. Попробуйте еще раз.';
-    router.replace('/dashboard'); // Redirect if essential data is missing
+    router.replace('/dashboard');
     return;
   }
   await requestPermissions();
@@ -108,6 +112,8 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  // Remove devicechange listener
+  navigator.mediaDevices.removeEventListener('devicechange', enumerateDevices);
   stopMediaStream();
 });
 
@@ -119,26 +125,34 @@ watch([selectedCameraId, selectedMicId], () => {
 
 async function requestPermissions() {
   try {
-    // Request camera and microphone permissions directly via browser API
+    // This will trigger the native permission prompt if permissions are not already granted.
+    // We use an empty catch block because not having devices is not a fatal error for joining.
     await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
   } catch (err: any) {
-    console.error('Permission denied for media devices:', err);
-    error.value = 'Не удалось получить доступ к камере или микрофону. Проверьте разрешения.';
+    console.warn('Could not get media stream for permissions check:', err);
+    error.value = 'Не удалось получить доступ к камере или микрофону. Вы можете присоединиться без них.';
   }
 }
 
 async function enumerateDevices() {
   try {
+    // Stop any existing stream before enumerating, to get fresh device labels
+    stopMediaStream(); 
     const devices = await navigator.mediaDevices.enumerateDevices();
+    
     cameraDevices.value = devices.filter(d => d.kind === 'videoinput');
     micDevices.value = devices.filter(d => d.kind === 'audioinput');
 
-    if (cameraDevices.value.length > 0) {
-      selectedCameraId.value = cameraDevices.value[0]?.deviceId || ''; // Use optional chaining
+    if (cameraDevices.value.length > 0 && !selectedCameraId.value) {
+      selectedCameraId.value = cameraDevices.value[0]?.deviceId || '';
     }
-    if (micDevices.value.length > 0) {
-      selectedMicId.value = micDevices.value[0]?.deviceId || ''; // Use optional chaining
+    if (micDevices.value.length > 0 && !selectedMicId.value) {
+      selectedMicId.value = micDevices.value[0]?.deviceId || '';
     }
+
+    // After enumerating, restart the media stream with the selected (or default) devices
+    await startMediaStream();
+    
   } catch (err: any) {
     console.error('Error enumerating devices:', err);
     error.value = 'Не удалось получить список медиаустройств.';
@@ -146,28 +160,29 @@ async function enumerateDevices() {
 }
 
 async function startMediaStream() {
-  stopMediaStream(); // Stop any existing stream
+  stopMediaStream();
+  
   try {
-    currentVideoTrack = await createLocalVideoTrack({
-      deviceId: selectedCameraId.value || undefined,
-      // captureOptions is deprecated, LiveKit handles facingMode via deviceId or default
-    });
-    currentAudioTrack = await createLocalAudioTrack({
-      deviceId: selectedMicId.value || undefined
-    });
-
-    if (localVideo.value && currentVideoTrack) {
-      currentVideoTrack.attach(localVideo.value);
+    if (cameraDevices.value.length > 0) {
+      currentVideoTrack = await createLocalVideoTrack({
+        deviceId: selectedCameraId.value || undefined,
+      });
+      if (localVideo.value) {
+        currentVideoTrack.attach(localVideo.value);
+      }
       cameraEnabled.value = true;
     } else {
       cameraEnabled.value = false;
     }
-    if (currentAudioTrack) {
+
+    if (micDevices.value.length > 0) {
+      currentAudioTrack = await createLocalAudioTrack({
+        deviceId: selectedMicId.value || undefined
+      });
       micEnabled.value = true;
     } else {
       micEnabled.value = false;
     }
-
   } catch (err: any) {
     console.error('Error starting media stream:', err);
     error.value = 'Не удалось запустить видео или аудио поток.';
@@ -177,7 +192,6 @@ async function startMediaStream() {
 }
 
 async function updateMediaStream() {
-  // Restart stream with selected devices
   await startMediaStream();
 }
 
@@ -202,9 +216,6 @@ function toggleCamera() {
       currentVideoTrack.unmute();
     }
     cameraEnabled.value = !cameraEnabled.value;
-  } else if (!cameraEnabled.value) {
-    // If camera was off and we want to enable, try to restart stream
-    startMediaStream();
   }
 }
 
@@ -216,9 +227,6 @@ function toggleMicrophone() {
       currentAudioTrack.unmute();
     }
     micEnabled.value = !micEnabled.value;
-  } else if (!micEnabled.value) {
-    // If mic was off and we want to enable, try to restart stream
-    startMediaStream();
   }
 }
 
@@ -240,8 +248,8 @@ function joinCall() {
       micEnabled: micEnabled.value.toString(),
       cameraId: selectedCameraId.value,
       micId: selectedMicId.value,
-      livekit_host: livekitHost, // Pass along
-      token: livekitToken       // Pass along
+      livekit_host: livekitHost,
+      token: livekitToken
     }
   });
 }

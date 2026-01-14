@@ -177,28 +177,27 @@ async function connectToRoom() {
 
   try {
     // Использовать livekitHost и livekitToken, полученные через параметры запроса
-    await livekitRoom.connect(livekitHost, livekitToken);
+    await livekitRoom.connect(`wss://${livekitHost}`, livekitToken);
 
     localVideoEnabled.value = initialVideoEnabled;
     localAudioEnabled.value = initialAudioEnabled;
 
-    const localVideoTrack = await createLocalVideoTrack({
-      deviceId: initialCameraId || undefined,
-    });
-    const localAudioTrack = await createLocalAudioTrack({
-      deviceId: initialMicId || undefined,
-    });
-
-    if (localVideoRef.value) {
-      localVideoTrack.attach(localVideoRef.value);
+    if (initialVideoEnabled) {
+      const localVideoTrack = await createLocalVideoTrack({
+        deviceId: initialCameraId || undefined,
+      });
+      if (localVideoRef.value) {
+        localVideoTrack.attach(localVideoRef.value);
+      }
+      await livekitRoom.localParticipant.publishTrack(localVideoTrack, { simulcast: true });
     }
-    await livekitRoom.localParticipant.publishTrack(localVideoTrack, { simulcast: true });
-    await livekitRoom.localParticipant.publishTrack(localAudioTrack);
 
-    if (!initialVideoEnabled) { localVideoTrack.mute(); } else { localVideoTrack.unmute(); }
-    if (!initialAudioEnabled) { localAudioTrack.mute(); } else { localAudioTrack.unmute(); }
-
-
+    if (initialAudioEnabled) {
+      const localAudioTrack = await createLocalAudioTrack({
+        deviceId: initialMicId || undefined,
+      });
+      await livekitRoom.localParticipant.publishTrack(localAudioTrack);
+    }
   } catch (error) {
     console.error('Failed to connect to LiveKit room:', error);
     alert('Не удалось подключиться к комнате.');
