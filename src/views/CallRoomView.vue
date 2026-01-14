@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-900 text-white flex flex-col">
     <!-- Header -->
-    <header class="bg-gray-800 p-4 flex justify-between items-center">
+    <header class="bg-gray-800 p-4 flex justify-between items-center sticky top-0 z-10">
       <h1 class="text-xl font-semibold">Комната: {{ roomId }}</h1>
       <button @click="disconnectRoom" class="px-3 py-1 rounded-md bg-red-600 hover:bg-red-700 text-sm">
         Выйти
@@ -9,7 +9,7 @@
     </header>
 
     <!-- Main Content - Video Grid -->
-    <main class="flex-1 p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
+    <main class="flex-1 p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-[240px_1fr]">
       <!-- Local Participant -->
       <div class="relative bg-black rounded-lg overflow-hidden flex items-center justify-center">
         <video ref="localVideoRef" autoplay playsinline muted class="w-full h-full object-cover"></video>
@@ -21,7 +21,7 @@
 
       <!-- Remote Participants -->
       <div v-for="participant in remoteParticipants" :key="participant.sid"
-           class="relative bg-black rounded-lg overflow-hidden flex items-center justify-center">
+           class="relative bg-black rounded-lg overflow-hidden flex items-center justify-center max-h-[240px]">
         <video :ref="(el) => setParticipantVideoRef(participant.sid, el as HTMLVideoElement | null)" autoplay playsinline class="w-full h-full object-cover"></video>
         <div class="absolute bottom-2 left-2 bg-gray-700 bg-opacity-75 px-2 py-1 rounded-md text-xs">
           {{ participant.identity }}
@@ -37,19 +37,21 @@
     </main>
 
     <!-- Controls -->
-    <footer class="bg-gray-800 p-4 flex justify-center space-x-4">
+    <footer class="bg-gray-800 p-4 flex justify-center space-x-4 sticky bottom-0 z-10">
       <button @click="toggleLocalAudio"
-              :class="localAudioEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'"
-              class="p-3 rounded-full text-white">
-        {{ localAudioEnabled ? 'Микрофон Вкл' : 'Микрофон Выкл' }}
+              class="p-3 rounded-full text-white"
+              :class="localAudioEnabled ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-600 hover:bg-gray-700'">
+        <Mic v-if="localAudioEnabled" :size="24" />
+        <MicOff v-else :size="24" />
       </button>
       <button @click="toggleLocalVideo"
-              :class="localVideoEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'"
-              class="p-3 rounded-full text-white">
-        {{ localVideoEnabled ? 'Камера Вкл' : 'Камера Выкл' }}
+              class="p-3 rounded-full text-white"
+              :class="localVideoEnabled ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-600 hover:bg-gray-700'">
+        <Video v-if="localVideoEnabled" :size="24" />
+        <VideoOff v-else :size="24" />
       </button>
       <button @click="disconnectRoom" class="p-3 rounded-full bg-red-600 hover:bg-red-700 text-white">
-        Повесить трубку
+        <PhoneOff :size="24" />
       </button>
     </footer>
   </div>
@@ -72,6 +74,7 @@ import {
   LocalAudioTrack,
   RemoteTrack,
 } from 'livekit-client';
+import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-vue-next'; // Импортируем иконки
 
 const route = useRoute();
 const router = useRouter();
